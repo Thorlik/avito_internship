@@ -1,0 +1,47 @@
+run:
+  timeout: 5m
+  tests: true
+
+output:
+  format: colored-line-number
+  print-linter-name: true
+
+linters:
+  enable:
+    - errcheck      # Проверка необработанных ошибок
+    - gosimple      # Упрощение кода
+    - govet         # Подозрительные конструкции
+    - ineffassign   # Неэффективные присваивания
+    - staticcheck   # Статический анализ
+    - unused        # Неиспользуемый код
+    - gofmt         # Форматирование
+    - goimports     # Импорты
+    - misspell      # Опечатки
+    - gosec         # Проблемы безопасности
+    - bodyclose     # Закрытие HTTP response body
+    - sqlclosecheck # Закрытие sql.Rows и sql.Stmt
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+    exclude-functions:
+      - (io.Closer).Close
+      - (*database/sql.Rows).Close
+
+  goimports:
+    local-prefixes: github.com/Thorlik/avito_internship
+
+  gosec:
+    excludes:
+      - G104  # Дублирует errcheck
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
