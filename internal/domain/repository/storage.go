@@ -1,9 +1,9 @@
-package storage
+package repository
 
 import (
 	"context"
 
-	"github.com/Thorlik/avito_internship/internal/models"
+	"github.com/Thorlik/avito_internship/internal/domain/models"
 )
 
 type Storage interface {

@@ -7,24 +7,24 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Thorlik/avito_internship/internal/models"
-	"github.com/Thorlik/avito_internship/internal/storage"
+	"github.com/Thorlik/avito_internship/internal/domain/models"
+	"github.com/Thorlik/avito_internship/internal/domain/repository"
 )
 
 type Service struct {
-	storage storage.Storage
-	rng     *rand.Rand
+	repo repository.Storage
+	rng  *rand.Rand
 }
 
-func NewService(storage storage.Storage) *Service {
+func NewService(repo repository.Storage) *Service {
 	return &Service{
-		storage: storage,
-		rng:     rand.New(rand.NewSource(time.Now().UnixNano())),
+		repo: repo,
+		rng:  rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
 func (s *Service) CreateTeam(ctx context.Context, team *models.Team) (*models.Team, error) {
-	exists, err := s.storage.TeamExists(ctx, team.TeamName)
+	exists, err := s.repo.TeamExists(ctx, team.TeamName)
 	if err != nil {
 		return nil, err
 	}
@@ -35,15 +35,15 @@ func (s *Service) CreateTeam(ctx context.Context, team *models.Team) (*models.Te
 		}
 	}
 
-	if err := s.storage.CreateTeam(ctx, team); err != nil {
+	if err := s.repo.CreateTeam(ctx, team); err != nil {
 		return nil, err
 	}
 
-	return s.storage.GetTeam(ctx, team.TeamName)
+	return s.repo.GetTeam(ctx, team.TeamName)
 }
 
 func (s *Service) GetTeam(ctx context.Context, teamName string) (*models.Team, error) {
-	team, err := s.storage.GetTeam(ctx, teamName)
+	team, err := s.repo.GetTeam(ctx, teamName)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (s *Service) GetTeam(ctx context.Context, teamName string) (*models.Team, e
 }
 
 func (s *Service) SetUserActive(ctx context.Context, userID string, isActive bool) (*models.User, error) {
-	user, err := s.storage.GetUser(ctx, userID)
+	user, err := s.repo.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (s *Service) SetUserActive(ctx context.Context, userID string, isActive boo
 	}
 
 	user.IsActive = isActive
-	if err := s.storage.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdateUser(ctx, user); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func (s *Service) SetUserActive(ctx context.Context, userID string, isActive boo
 }
 
 func (s *Service) GetUserReviews(ctx context.Context, userID string) ([]models.PullRequestShort, error) {
-	user, err := s.storage.GetUser(ctx, userID)
+	user, err := s.repo.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,11 +85,11 @@ func (s *Service) GetUserReviews(ctx context.Context, userID string) ([]models.P
 		return []models.PullRequestShort{}, nil
 	}
 
-	return s.storage.GetPullRequestsByReviewer(ctx, userID)
+	return s.repo.GetPullRequestsByReviewer(ctx, userID)
 }
 
 func (s *Service) CreatePullRequest(ctx context.Context, prID, prName, authorID string) (*models.PullRequest, error) {
-	exists, err := s.storage.PullRequestExists(ctx, prID)
+	exists, err := s.repo.PullRequestExists(ctx, prID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *Service) CreatePullRequest(ctx context.Context, prID, prName, authorID 
 		}
 	}
 
-	author, err := s.storage.GetUser(ctx, authorID)
+	author, err := s.repo.GetUser(ctx, authorID)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (s *Service) CreatePullRequest(ctx context.Context, prID, prName, authorID 
 		}
 	}
 
-	teamMembers, err := s.storage.GetUsersByTeam(ctx, author.TeamName)
+	teamMembers, err := s.repo.GetUsersByTeam(ctx, author.TeamName)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (s *Service) CreatePullRequest(ctx context.Context, prID, prName, authorID 
 		CreatedAt:         &now,
 	}
 
-	if err := s.storage.CreatePullRequest(ctx, pr); err != nil {
+	if err := s.repo.CreatePullRequest(ctx, pr); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +136,7 @@ func (s *Service) CreatePullRequest(ctx context.Context, prID, prName, authorID 
 }
 
 func (s *Service) MergePullRequest(ctx context.Context, prID string) (*models.PullRequest, error) {
-	pr, err := s.storage.GetPullRequest(ctx, prID)
+	pr, err := s.repo.GetPullRequest(ctx, prID)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (s *Service) MergePullRequest(ctx context.Context, prID string) (*models.Pu
 	pr.Status = models.StatusMerged
 	pr.MergedAt = &now
 
-	if err := s.storage.UpdatePullRequest(ctx, pr); err != nil {
+	if err := s.repo.UpdatePullRequest(ctx, pr); err != nil {
 		return nil, err
 	}
 
@@ -163,7 +163,7 @@ func (s *Service) MergePullRequest(ctx context.Context, prID string) (*models.Pu
 }
 
 func (s *Service) ReassignReviewer(ctx context.Context, prID, oldReviewerID string) (*models.PullRequest, string, error) {
-	pr, err := s.storage.GetPullRequest(ctx, prID)
+	pr, err := s.repo.GetPullRequest(ctx, prID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -195,7 +195,7 @@ func (s *Service) ReassignReviewer(ctx context.Context, prID, oldReviewerID stri
 		}
 	}
 
-	oldReviewer, err := s.storage.GetUser(ctx, oldReviewerID)
+	oldReviewer, err := s.repo.GetUser(ctx, oldReviewerID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -206,7 +206,7 @@ func (s *Service) ReassignReviewer(ctx context.Context, prID, oldReviewerID stri
 		}
 	}
 
-	teamMembers, err := s.storage.GetUsersByTeam(ctx, oldReviewer.TeamName)
+	teamMembers, err := s.repo.GetUsersByTeam(ctx, oldReviewer.TeamName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -217,7 +217,7 @@ func (s *Service) ReassignReviewer(ctx context.Context, prID, oldReviewerID stri
 	}
 
 	pr.AssignedReviewers[reviewerIndex] = newReviewerID
-	if err := s.storage.UpdatePullRequest(ctx, pr); err != nil {
+	if err := s.repo.UpdatePullRequest(ctx, pr); err != nil {
 		return nil, "", err
 	}
 
@@ -238,7 +238,7 @@ func (s *Service) assignReviewers(teamMembers []models.User, authorID string) []
 		return []string{}
 	}
 
-	counts, err := s.storage.GetReviewCounts(context.Background(), candidateIDs)
+	counts, err := s.repo.GetReviewCounts(context.Background(), candidateIDs)
 	if err != nil {
 		return s.randomSelection(candidates, 2)
 	}
@@ -285,7 +285,7 @@ func (s *Service) findReplacement(ctx context.Context, teamMembers []models.User
 	for _, c := range candidates {
 		candidateIDs = append(candidateIDs, c.UserID)
 	}
-	counts, err := s.storage.GetReviewCounts(ctx, candidateIDs)
+	counts, err := s.repo.GetReviewCounts(ctx, candidateIDs)
 	if err != nil {
 		return candidates[s.rng.Intn(len(candidates))].UserID, nil
 	}

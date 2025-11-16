@@ -1,4 +1,4 @@
-package storage
+package persistence
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Thorlik/avito_internship/internal/models"
+	"github.com/Thorlik/avito_internship/internal/domain/models"
 	_ "github.com/lib/pq"
 )
 
