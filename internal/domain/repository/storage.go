@@ -24,5 +24,7 @@ type Storage interface {
 
 	GetReviewCounts(ctx context.Context, userIDs []string) (map[string]int, error)
 
+	GetStatistics(ctx context.Context) (*models.Statistics, error)
+
 	Close() error
 }

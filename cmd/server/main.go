@@ -46,6 +46,7 @@ func main() {
 	mux.HandleFunc("/pullRequest/create", handler.CreatePullRequest)
 	mux.HandleFunc("/pullRequest/merge", handler.MergePullRequest)
 	mux.HandleFunc("/pullRequest/reassign", handler.ReassignReviewer)
+	mux.HandleFunc("/statistics", handler.GetStatistics)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,

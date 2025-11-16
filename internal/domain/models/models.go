@@ -63,3 +63,21 @@ type ErrorDetail struct {
 	Code    ErrorCode `json:"code"`
 	Message string    `json:"message"`
 }
+
+type Statistics struct {
+	TotalTeams   int             `json:"total_teams"`
+	TotalUsers   int             `json:"total_users"`
+	ActiveUsers  int             `json:"active_users"`
+	TotalPRs     int             `json:"total_prs"`
+	OpenPRs      int             `json:"open_prs"`
+	MergedPRs    int             `json:"merged_prs"`
+	TopReviewers []ReviewerStats `json:"top_reviewers"`
+}
+
+type ReviewerStats struct {
+	UserID           string `json:"user_id"`
+	Username         string `json:"username"`
+	OpenReviews      int    `json:"open_reviews"`
+	CompletedReviews int    `json:"completed_reviews"`
+	TotalReviews     int    `json:"total_reviews"`
+}

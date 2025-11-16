@@ -332,6 +332,10 @@ func (s *Service) randomSelection(candidates []models.User, maxCount int) []stri
 	return result
 }
 
+func (s *Service) GetStatistics(ctx context.Context) (*models.Statistics, error) {
+	return s.repo.GetStatistics(ctx)
+}
+
 type ServiceError struct {
 	Code    models.ErrorCode
 	Message string

@@ -134,3 +134,13 @@ func (h *Handler) ReassignReviewer(w http.ResponseWriter, r *http.Request) {
 		ReplacedBy: newReviewerID,
 	})
 }
+
+func (h *Handler) GetStatistics(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.service.GetStatistics(r.Context())
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, stats)
+}

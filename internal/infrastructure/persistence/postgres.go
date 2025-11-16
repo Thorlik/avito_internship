@@ -285,3 +285,58 @@ func (s *PostgresStorage) GetReviewCounts(ctx context.Context, userIDs []string)
 
 	return counts, nil
 }
+
+func (s *PostgresStorage) GetStatistics(ctx context.Context) (*models.Statistics, error) {
+	stats := &models.Statistics{}
+
+	err := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM teams").Scan(&stats.TotalTeams)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.QueryRowContext(ctx, "SELECT COUNT(*), COUNT(*) FILTER (WHERE is_active = true) FROM users").
+		Scan(&stats.TotalUsers, &stats.ActiveUsers)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.QueryRowContext(ctx,
+		`SELECT 
+			COUNT(*), 
+			COUNT(*) FILTER (WHERE status = 'OPEN'),
+			COUNT(*) FILTER (WHERE status = 'MERGED')
+		FROM pull_requests`).
+		Scan(&stats.TotalPRs, &stats.OpenPRs, &stats.MergedPRs)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT 
+			u.user_id,
+			u.username,
+			COUNT(*) FILTER (WHERE pr.status = 'OPEN') as open_reviews,
+			COUNT(*) FILTER (WHERE pr.status = 'MERGED') as completed_reviews,
+			COUNT(*) as total_reviews
+		FROM users u
+		LEFT JOIN pull_requests pr ON pr.assigned_reviewers::jsonb ? u.user_id
+		GROUP BY u.user_id, u.username
+		HAVING COUNT(*) > 0
+		ORDER BY total_reviews DESC, open_reviews DESC
+		LIMIT 10`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats.TopReviewers = []models.ReviewerStats{}
+	for rows.Next() {
+		var rs models.ReviewerStats
+		if err := rows.Scan(&rs.UserID, &rs.Username, &rs.OpenReviews, &rs.CompletedReviews, &rs.TotalReviews); err != nil {
+			return nil, err
+		}
+		stats.TopReviewers = append(stats.TopReviewers, rs)
+	}
+
+	return stats, nil
+}
